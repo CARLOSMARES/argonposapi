@@ -1,6 +1,16 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { CompanyController } from './controllers/company/company.controller';
+import { FacturasController } from './controllers/facturas/facturas.controller';
+import { ProductsController } from './controllers/products/products.controller';
+import { StockController } from './controllers/stock/stock.controller';
+import { UserController } from './controllers/user/user.controller';
+import { CompanyService } from './service/company/company.service';
+import { FacturasService } from './service/facturas/facturas.service';
+import { ProductsService } from './service/products/products.service';
+import { StockService } from './service/stock/stock.service';
+import { UserService } from './service/user/user.service';
 
 @Module(
   {
@@ -28,9 +38,17 @@ import { TypeOrmModule } from '@nestjs/typeorm';
       })
     ],
     controllers: [
-    ],
+      UserController,
+      CompanyController,
+      FacturasController,
+      ProductsController,
+      StockController],
     providers: [
-    ],
+      UserService,
+      CompanyService,
+      FacturasService,
+      ProductsService,
+      StockService],
   }
 )
 export class AppModule { }
