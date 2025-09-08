@@ -4,6 +4,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { CompanyController } from './controllers/company/company.controller';
 import { FacturasController } from './controllers/facturas/facturas.controller';
 import { ProductsController } from './controllers/products/products.controller';
+import { ProvidersController } from './controllers/providers/providers.controller';
 import { StockController } from './controllers/stock/stock.controller';
 import { UserController } from './controllers/user/user.controller';
 import { company } from './entities/company.entity';
@@ -15,6 +16,7 @@ import { User } from './entities/user.entity';
 import { CompanyService } from './service/company/company.service';
 import { FacturasService } from './service/facturas/facturas.service';
 import { ProductsService } from './service/products/products.service';
+import { ProvidersService } from './service/providers/providers.service';
 import { StockService } from './service/stock/stock.service';
 import { UserService } from './service/user/user.service';
 
@@ -62,14 +64,16 @@ import { UserService } from './service/user/user.service';
       CompanyController,
       FacturasController,
       ProductsController,
-      StockController
+      StockController,
+      ProvidersController
     ],
     providers: [
       UserService,
       CompanyService,
       FacturasService,
       ProductsService,
-      StockService
+      StockService,
+      ProvidersService
     ],
   }
 )
