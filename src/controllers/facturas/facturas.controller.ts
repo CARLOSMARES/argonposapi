@@ -2,6 +2,7 @@ import { Body, Controller, Delete, Get, Inject, Param, ParseIntPipe, Patch, Post
 import { ApiTags } from '@nestjs/swagger';
 import { CreateFacturasDto, UpdateFacturasDto } from 'src/dto/facturas.dto';
 import { FacturasService } from 'src/service/facturas/facturas.service';
+import { QueuesService } from 'src/queues/queues.service';
 
 @ApiTags('facturas')
 @Controller('facturas')
@@ -9,7 +10,9 @@ export class FacturasController {
 
   constructor(
     @Inject()
-    private readonly facturasService: FacturasService
+    private readonly facturasService: FacturasService,
+    @Inject(QueuesService)
+    private readonly queuesService: QueuesService,
   ) {}
 
   @Post()
@@ -20,6 +23,11 @@ export class FacturasController {
   @Get()
   async findAll() {
     return this.facturasService.findAll();
+  }
+
+  @Post('enqueue-test/:id')
+  async enqueueTest(@Param('id', ParseIntPipe) id: number) {
+    return this.queuesService.enqueueInvoice('generate-pdf', { id });
   }
 
   @Get(':id')

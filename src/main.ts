@@ -3,6 +3,11 @@ import { MicroserviceOptions, Transport } from '@nestjs/microservices';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { AppModule } from './app.module';
 import { ValidationPipe } from '@nestjs/common';
+import { Queue } from 'bullmq';
+import { getQueueToken } from '@nestjs/bullmq';
+import { createBullBoard } from '@bull-board/api';
+import { BullMQAdapter } from '@bull-board/api/bullMQAdapter';
+import { ExpressAdapter } from '@bull-board/express';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -14,6 +19,18 @@ async function bootstrap() {
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('docs', app, document);
   app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
+
+  // bull-board en /queues
+  const serverAdapter = new ExpressAdapter();
+  serverAdapter.setBasePath('/queues');
+  const invoicesQueue = app.get<Queue>(getQueueToken('invoices'));
+  createBullBoard({
+    queues: [new BullMQAdapter(invoicesQueue)],
+    serverAdapter,
+  });
+  const expressApp = app.getHttpAdapter().getInstance();
+  expressApp.use('/queues', serverAdapter.getRouter());
+
   await app.listen(process.env.PORT ?? 3000);
   
   // const app = await NestFactory.createMicroservice<MicroserviceOptions>(

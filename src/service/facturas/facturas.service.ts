@@ -1,20 +1,26 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { CreateFacturasDto, UpdateFacturasDto } from 'src/dto/facturas.dto';
 import { facturas } from 'src/entities/facturas.entity';
 import { Repository } from 'typeorm';
+import { QueuesService } from 'src/queues/queues.service';
 
 @Injectable()
 export class FacturasService {
 
     constructor(
         @InjectRepository(facturas)
-        private readonly facturasRepository: Repository<facturas>
+        private readonly facturasRepository: Repository<facturas>,
+        @Inject(QueuesService)
+        private readonly queuesService: QueuesService,
     ) {}
 
     async create(payload: CreateFacturasDto): Promise<facturas> {
         const entity = this.facturasRepository.create(payload);
-        return this.facturasRepository.save(entity);
+        const saved = await this.facturasRepository.save(entity);
+        // Encolar un trabajo de ejemplo
+        await this.queuesService.enqueueInvoice('generate-pdf', { id: saved.id });
+        return saved;
     }
 
     async findAll(): Promise<facturas[]> {

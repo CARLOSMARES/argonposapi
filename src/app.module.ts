@@ -14,6 +14,8 @@ import { providers } from './entities/providers.entity';
 import { stock } from './entities/stock.entity';
 import { User } from './entities/user.entity';
 import { CompanyService } from './service/company/company.service';
+import { QueuesModule } from './queues/queues.module';
+import { HealthController } from './controllers/health.controller';
 import { FacturasService } from './service/facturas/facturas.service';
 import { ProductsService } from './service/products/products.service';
 import { ProvidersService } from './service/providers/providers.service';
@@ -58,6 +60,7 @@ import { UserService } from './service/user/user.service';
         }
       ),
       TypeOrmModule.forFeature([User, company, facturas, products, stock, providers]),
+      QueuesModule,
     ],
     controllers: [
       UserController,
@@ -65,7 +68,8 @@ import { UserService } from './service/user/user.service';
       FacturasController,
       ProductsController,
       StockController,
-      ProvidersController
+      ProvidersController,
+      HealthController
     ],
     providers: [
       UserService,
