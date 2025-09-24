@@ -3,6 +3,7 @@ import { InjectQueue } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
 import { InjectDataSource } from '@nestjs/typeorm';
 import { DataSource } from 'typeorm';
+import { Public } from 'src/auth/public.decorator';
 
 @Controller('health')
 export class HealthController {
@@ -11,6 +12,7 @@ export class HealthController {
     @InjectDataSource() private readonly dataSource: DataSource,
   ) {}
 
+  @Public()
   @Get()
   async check() {
     const client = await this.invoicesQueue.client;

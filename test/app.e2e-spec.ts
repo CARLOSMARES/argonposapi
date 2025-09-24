@@ -65,39 +65,55 @@ describe('App E2E', () => {
       });
   });
 
-  it('GET /facturas', async () => {
-    await request(app.getHttpServer()).get('/facturas').expect(200);
+  it('POST /auth/login', async () => {
+    await request(app.getHttpServer())
+      .post('/auth/login')
+      .send({ username: 'test', password: 'test' })
+      .expect(401); // Sin usuario válido en DB
   });
 
-  it('POST /facturas', async () => {
+  it('POST /auth/refresh', async () => {
     await request(app.getHttpServer())
-      .post('/facturas')
-      .send({ amount: 100, id_cliente: 1, id_user: 1, idfactura: 'F-1' })
+      .post('/auth/refresh')
+      .send({ refresh_token: 'invalid' })
+      .expect(401);
+  });
+
+  it('POST /user (registro público)', async () => {
+    await request(app.getHttpServer())
+      .post('/user')
+      .send({ 
+        name: 'Test', 
+        lastname: 'User', 
+        user: 'testuser', 
+        password: 'test123', 
+        email: 'test@example.com' 
+      })
       .expect(201);
   });
 
-  it('POST /facturas/enqueue-test/1', async () => {
-    await request(app.getHttpServer()).post('/facturas/enqueue-test/1').expect(201);
+  it('GET /facturas sin token', async () => {
+    await request(app.getHttpServer()).get('/facturas').expect(401);
   });
 
-  it('GET /providers', async () => {
-    await request(app.getHttpServer()).get('/providers').expect(200);
+  it('GET /company sin token', async () => {
+    await request(app.getHttpServer()).get('/company').expect(401);
   });
 
-  it('GET /products', async () => {
-    await request(app.getHttpServer()).get('/products').expect(200);
+  it('GET /providers sin token', async () => {
+    await request(app.getHttpServer()).get('/providers').expect(401);
   });
 
-  it('GET /stock', async () => {
-    await request(app.getHttpServer()).get('/stock').expect(200);
+  it('GET /products sin token', async () => {
+    await request(app.getHttpServer()).get('/products').expect(401);
   });
 
-  it('GET /company', async () => {
-    await request(app.getHttpServer()).get('/company').expect(200);
+  it('GET /stock sin token', async () => {
+    await request(app.getHttpServer()).get('/stock').expect(401);
   });
 
-  it('GET /user', async () => {
-    await request(app.getHttpServer()).get('/user').expect(200);
+  it('GET /user sin token', async () => {
+    await request(app.getHttpServer()).get('/user').expect(401);
   });
 });
 

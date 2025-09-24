@@ -3,6 +3,8 @@ import { MicroserviceOptions, Transport } from '@nestjs/microservices';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { AppModule } from './app.module';
 import { ValidationPipe } from '@nestjs/common';
+import { Reflector } from '@nestjs/core';
+import { JwtAuthGuard } from './auth/jwt-auth.guard';
 import { Queue } from 'bullmq';
 import { getQueueToken } from '@nestjs/bullmq';
 import { createBullBoard } from '@bull-board/api';
@@ -19,6 +21,7 @@ async function bootstrap() {
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('docs', app, document);
   app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
+  app.useGlobalGuards(new JwtAuthGuard(app.get(Reflector)));
 
   // bull-board en /queues
   const serverAdapter = new ExpressAdapter();

@@ -1,6 +1,8 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { ThrottlerModule } from '@nestjs/throttler';
+import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { CompanyController } from './controllers/company/company.controller';
 import { FacturasController } from './controllers/facturas/facturas.controller';
 import { ProductsController } from './controllers/products/products.controller';
@@ -16,6 +18,12 @@ import { User } from './entities/user.entity';
 import { CompanyService } from './service/company/company.service';
 import { QueuesModule } from './queues/queues.module';
 import { HealthController } from './controllers/health.controller';
+import { MetricsController } from './controllers/metrics.controller';
+import { AuthModule } from './auth/auth.module';
+import { LoggingInterceptor } from './interceptors/logging.interceptor';
+import { PrometheusInterceptor } from './interceptors/prometheus.interceptor';
+import { CustomThrottlerGuard } from './guards/custom-throttler.guard';
+import { TypeORMMetricsService } from './metrics/typeorm-metrics.service';
 import { FacturasService } from './service/facturas/facturas.service';
 import { ProductsService } from './service/products/products.service';
 import { ProvidersService } from './service/providers/providers.service';
@@ -34,6 +42,16 @@ import { UserService } from './service/user/user.service';
           ],
         }
       ),
+      ThrottlerModule.forRootAsync({
+        imports: [ConfigModule],
+        useFactory: (config: ConfigService) => [
+          {
+            ttl: config.get<number>('THROTTLE_TTL') ?? 60000, // 1 minuto
+            limit: config.get<number>('THROTTLE_LIMIT') ?? 100, // 100 requests por minuto
+          },
+        ],
+        inject: [ConfigService],
+      }),
       TypeOrmModule.forRootAsync(
         {
           imports: [
@@ -60,6 +78,7 @@ import { UserService } from './service/user/user.service';
         }
       ),
       TypeOrmModule.forFeature([User, company, facturas, products, stock, providers]),
+      AuthModule,
       QueuesModule,
     ],
     controllers: [
@@ -69,7 +88,8 @@ import { UserService } from './service/user/user.service';
       ProductsController,
       StockController,
       ProvidersController,
-      HealthController
+      HealthController,
+      MetricsController
     ],
     providers: [
       UserService,
@@ -77,7 +97,20 @@ import { UserService } from './service/user/user.service';
       FacturasService,
       ProductsService,
       StockService,
-      ProvidersService
+      ProvidersService,
+      TypeORMMetricsService,
+      {
+        provide: APP_INTERCEPTOR,
+        useClass: LoggingInterceptor,
+      },
+      {
+        provide: APP_INTERCEPTOR,
+        useClass: PrometheusInterceptor,
+      },
+      {
+        provide: APP_GUARD,
+        useClass: CustomThrottlerGuard,
+      },
     ],
   }
 )
