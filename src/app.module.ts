@@ -9,12 +9,18 @@ import { ProductsController } from './controllers/products/products.controller';
 import { ProvidersController } from './controllers/providers/providers.controller';
 import { StockController } from './controllers/stock/stock.controller';
 import { UserController } from './controllers/user/user.controller';
+import { CategoriesController } from './controllers/categories/categories.controller';
+import { ProductTypesController } from './controllers/product_types/product_types.controller';
+import { PromotionsController } from './controllers/promotions/promotions.controller';
 import { company } from './entities/company.entity';
 import { facturas } from './entities/facturas.entity';
 import { products } from './entities/products.entity';
 import { providers } from './entities/providers.entity';
 import { stock } from './entities/stock.entity';
 import { User } from './entities/user.entity';
+import { categories } from './entities/categories.entity';
+import { product_types } from './entities/product_types.entity';
+import { promotions } from './entities/promotions.entity';
 import { CompanyService } from './service/company/company.service';
 import { QueuesModule } from './queues/queues.module';
 import { HealthController } from './controllers/health.controller';
@@ -29,6 +35,9 @@ import { ProductsService } from './service/products/products.service';
 import { ProvidersService } from './service/providers/providers.service';
 import { StockService } from './service/stock/stock.service';
 import { UserService } from './service/user/user.service';
+import { CategoriesService } from './service/categories/categories.service';
+import { ProductTypesService } from './service/product_types/product_types.service';
+import { PromotionsService } from './service/promotions/promotions.service';
 
 @Module(
   {
@@ -77,7 +86,7 @@ import { UserService } from './service/user/user.service';
           ],
         }
       ),
-      TypeOrmModule.forFeature([User, company, facturas, products, stock, providers]),
+      TypeOrmModule.forFeature([User, company, facturas, products, stock, providers, categories, product_types, promotions]),
       AuthModule,
       QueuesModule,
     ],
@@ -88,6 +97,9 @@ import { UserService } from './service/user/user.service';
       ProductsController,
       StockController,
       ProvidersController,
+      CategoriesController,
+      ProductTypesController,
+      PromotionsController,
       HealthController,
       MetricsController
     ],
@@ -98,6 +110,9 @@ import { UserService } from './service/user/user.service';
       ProductsService,
       StockService,
       ProvidersService,
+      CategoriesService,
+      ProductTypesService,
+      PromotionsService,
       TypeORMMetricsService,
       {
         provide: APP_INTERCEPTOR,

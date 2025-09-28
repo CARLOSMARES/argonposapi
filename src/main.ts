@@ -10,6 +10,7 @@ import { getQueueToken } from '@nestjs/bullmq';
 import { createBullBoard } from '@bull-board/api';
 import { BullMQAdapter } from '@bull-board/api/bullMQAdapter';
 import { ExpressAdapter } from '@bull-board/express';
+import { join } from 'path';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -33,6 +34,9 @@ async function bootstrap() {
   });
   const expressApp = app.getHttpAdapter().getInstance();
   expressApp.use('/queues', serverAdapter.getRouter());
+  
+  // Servir archivos estáticos de fotos
+  expressApp.use('/fotos', expressApp.static(join(__dirname, '..', 'fotos')));
 
   await app.listen(process.env.PORT ?? 3000);
   

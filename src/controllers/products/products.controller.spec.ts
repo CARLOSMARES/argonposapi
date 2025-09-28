@@ -39,4 +39,31 @@ describe('ProductsController', () => {
     expect(serviceMock.create).toHaveBeenCalled();
     expect(res).toEqual({ id: 1 });
   });
+
+  it('POST /products/upload-photo/:id sube foto', async () => {
+    const mockFile = {
+      filename: 'product_1_1234567890.jpg',
+      originalname: 'test.jpg',
+      mimetype: 'image/jpeg',
+      size: 1024,
+    } as Express.Multer.File;
+
+    const mockUpdatedProduct = {
+      id: 1,
+      name: 'Producto',
+      photo_url: '/fotos/product_1_1234567890.jpg',
+    };
+
+    (serviceMock.update as any).mockResolvedValue(mockUpdatedProduct);
+
+    const res = await controller.uploadPhoto(1, mockFile);
+
+    expect(serviceMock.update).toHaveBeenCalledWith(1, { photo_url: '/fotos/product_1_1234567890.jpg' });
+    expect(res).toEqual({
+      success: true,
+      message: 'Foto subida exitosamente',
+      photo_url: '/fotos/product_1_1234567890.jpg',
+      product: mockUpdatedProduct,
+    });
+  });
 });
