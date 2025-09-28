@@ -2,16 +2,31 @@ import { ApiProperty, PartialType } from '@nestjs/swagger';
 import { IsInt, IsNumber, IsString } from 'class-validator';
 
 export class CreateCompanyDto {
-    @ApiProperty()
+    @ApiProperty({
+        description: 'Nombre de la empresa',
+        example: 'Argon POS S.A. de C.V.'
+    })
     @IsString()
     name: string;
-    @ApiProperty()
+    
+    @ApiProperty({
+        description: 'RFC de la empresa',
+        example: 'ARG123456789'
+    })
     @IsString()
     rfc: string;
-    @ApiProperty()
+    
+    @ApiProperty({
+        description: 'Dirección de la empresa',
+        example: 'Av. Principal 123, Col. Centro, CDMX'
+    })
     @IsString()
     direction: string;
-    @ApiProperty()
+    
+    @ApiProperty({
+        description: 'Número de teléfono de la empresa',
+        example: 5555123456
+    })
     @IsNumber()
     phone: number;
 }

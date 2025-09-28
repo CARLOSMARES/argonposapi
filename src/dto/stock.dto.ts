@@ -2,13 +2,24 @@ import { ApiProperty, PartialType } from '@nestjs/swagger';
 import { IsInt } from 'class-validator';
 
 export class CreateStockDto {
-    @ApiProperty()
+    @ApiProperty({
+        description: 'ID del producto',
+        example: 1
+    })
     @IsInt()
     id_product: number;
-    @ApiProperty()
+    
+    @ApiProperty({
+        description: 'Stock mínimo del producto',
+        example: 10
+    })
     @IsInt()
     minstock: number;
-    @ApiProperty()
+    
+    @ApiProperty({
+        description: 'Cantidad actual en stock',
+        example: 50
+    })
     @IsInt()
     stock: number;
 }

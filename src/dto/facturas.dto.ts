@@ -2,16 +2,33 @@ import { ApiProperty, PartialType } from '@nestjs/swagger';
 import { IsInt, IsNumber, IsString } from 'class-validator';
 
 export class CreateFacturasDto {
-    @ApiProperty({ type: Number, format: 'double' })
+    @ApiProperty({ 
+        type: Number, 
+        format: 'double',
+        description: 'Monto total de la factura',
+        example: 150.50
+    })
     @IsNumber()
     amount: number;
-    @ApiProperty()
+    
+    @ApiProperty({
+        description: 'ID del cliente',
+        example: 1
+    })
     @IsInt()
     id_cliente: number;
-    @ApiProperty()
+    
+    @ApiProperty({
+        description: 'ID del usuario que crea la factura',
+        example: 1
+    })
     @IsInt()
     id_user: number;
-    @ApiProperty()
+    
+    @ApiProperty({
+        description: 'Número único de la factura',
+        example: 'FAC-2024-001'
+    })
     @IsString()
     idfactura: string;
 }

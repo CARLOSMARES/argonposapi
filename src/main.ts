@@ -11,6 +11,7 @@ import { createBullBoard } from '@bull-board/api';
 import { BullMQAdapter } from '@bull-board/api/bullMQAdapter';
 import { ExpressAdapter } from '@bull-board/express';
 import { join } from 'path';
+import * as express from 'express';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -36,7 +37,7 @@ async function bootstrap() {
   expressApp.use('/queues', serverAdapter.getRouter());
   
   // Servir archivos estáticos de fotos
-  expressApp.use('/fotos', expressApp.static(join(__dirname, '..', 'fotos')));
+  expressApp.use('/fotos', express.static(join(__dirname, '..', 'fotos')));
 
   await app.listen(process.env.PORT ?? 3000);
   
