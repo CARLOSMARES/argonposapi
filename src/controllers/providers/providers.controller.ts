@@ -1,17 +1,27 @@
-import { Body, Controller, Delete, Get, Inject, Param, ParseIntPipe, Patch, Post, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Inject,
+  Param,
+  ParseIntPipe,
+  Patch,
+  Post,
+  UseGuards,
+} from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
-import { CreateProvidersDto, UpdateProvidersDto } from 'src/dto/providers.dto';
-import { ProvidersService } from 'src/service/providers/providers.service';
-import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
+import { JwtAuthGuard } from '../../auth/jwt-auth.guard';
+import { CreateProvidersDto, UpdateProvidersDto } from '../../dto/providers.dto';
+import { ProvidersService } from '../../service/providers/providers.service';
 
 @ApiTags('providers')
 @Controller('providers')
 export class ProvidersController {
-
   constructor(
     @Inject()
-    private readonly providersService: ProvidersService
-  ) {}
+    private readonly providersService: ProvidersService,
+  ) { }
 
   @Post()
   @UseGuards(JwtAuthGuard)
@@ -47,5 +57,3 @@ export class ProvidersController {
     return { success: true };
   }
 }
-
-

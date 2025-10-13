@@ -1,17 +1,27 @@
-import { Body, Controller, Delete, Get, Inject, Param, ParseIntPipe, Patch, Post, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Inject,
+  Param,
+  ParseIntPipe,
+  Patch,
+  Post,
+  UseGuards,
+} from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
-import { CreateCompanyDto, UpdateCompanyDto } from 'src/dto/company.dto';
-import { CompanyService } from 'src/service/company/company.service';
-import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
+import { JwtAuthGuard } from '../../auth/jwt-auth.guard';
+import { CreateCompanyDto, UpdateCompanyDto } from '../../dto/company.dto';
+import { CompanyService } from '../../service/company/company.service';
 
 @ApiTags('company')
 @Controller('company')
 export class CompanyController {
-
   constructor(
     @Inject()
-    private readonly companyService: CompanyService
-  ) {}
+    private readonly companyService: CompanyService,
+  ) { }
 
   @Post()
   @UseGuards(JwtAuthGuard)

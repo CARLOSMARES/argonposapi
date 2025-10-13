@@ -1,97 +1,98 @@
+/* eslint-disable prettier/prettier */
 import { Controller, Get, Res } from '@nestjs/common';
 import { Response } from 'express';
-import { getMetrics } from '../interceptors/prometheus.interceptor';
 import { register } from 'prom-client';
-import { Public } from 'src/auth/public.decorator';
-import { BullMQMetricsService } from 'src/metrics/bullmq-metrics.service';
-import { TypeORMMetricsService } from 'src/metrics/typeorm-metrics.service';
+import { Public } from '../auth/public.decorator';
+import { getMetrics } from '../interceptors/prometheus.interceptor';
+import { BullMQMetricsService } from '../metrics/bullmq-metrics.service';
+import { TypeORMMetricsService } from '../metrics/typeorm-metrics.service';
 
 @Controller('metrics')
 export class MetricsController {
-  constructor(
-    private readonly bullMQMetrics: BullMQMetricsService,
-    private readonly typeORMMetrics: TypeORMMetricsService,
-  ) {}
+    constructor(
+        private readonly bullMQMetrics: BullMQMetricsService,
+        private readonly typeORMMetrics: TypeORMMetricsService,
+    ) { }
 
-  /**
-   * 📊 MÉTRICAS PROMETHEUS
-   * 
-   * Endpoint que expone todas las métricas en formato Prometheus
-   * Útil para herramientas de monitoreo como Grafana, Prometheus, etc.
-   */
-  @Public()
-  @Get()
-  async getMetrics(@Res() res: Response) {
-    const metrics = await getMetrics();
-    res.set('Content-Type', register.contentType);
-    res.send(metrics);
-  }
+    /**
+     * 📊 MÉTRICAS PROMETHEUS
+     *
+     * Endpoint que expone todas las métricas en formato Prometheus
+     * Útil para herramientas de monitoreo como Grafana, Prometheus, etc.
+     */
+    @Public()
+    @Get()
+    getMetrics(@Res() res: Response) {
+        const metrics = getMetrics();
+        res.set('Content-Type', register.contentType);
+        res.send(metrics);
+    }
 
-  /**
-   * 📈 ESTADÍSTICAS DETALLADAS
-   * 
-   * Endpoint que muestra estadísticas detalladas del sistema POS
-   * Útil para dashboards internos y monitoreo manual
-   */
-  @Public()
-  @Get('stats')
-  async getDetailedStats() {
-    const queueStats = await this.bullMQMetrics.getQueueStats();
-    const dbStats = await this.typeORMMetrics.getDatabaseStats();
+    /**
+     * 📈 ESTADÍSTICAS DETALLADAS
+     *
+     * Endpoint que muestra estadísticas detalladas del sistema POS
+     * Útil para dashboards internos y monitoreo manual
+     */
+    @Public()
+    @Get('stats')
+    async getDetailedStats() {
+        const queueStats = await this.bullMQMetrics.getQueueStats();
+        const dbStats = this.typeORMMetrics.getDatabaseStats();
 
-    return {
-      timestamp: new Date().toISOString(),
-      system: {
-        name: 'Argon POS API',
-        version: '1.0.0',
-        uptime: process.uptime(),
-        memory: process.memoryUsage(),
-        cpu: process.cpuUsage(),
-      },
-      queues: queueStats,
-      database: dbStats,
-      metrics: {
-        description: 'Estadísticas detalladas del sistema POS Argon',
-        endpoints: {
-          prometheus: '/metrics - Métricas en formato Prometheus',
-          stats: '/metrics/stats - Estadísticas detalladas (este endpoint)',
-          health: '/health - Estado general del sistema',
-        },
-        available_metrics: [
-          'argon_pos_http_requests_total - Total de requests HTTP',
-          'argon_pos_http_request_duration_seconds - Tiempo de respuesta HTTP',
-          'argon_pos_http_active_connections - Conexiones HTTP activas',
-          'argon_pos_rate_limit_hits_total - Intentos bloqueados por rate limiting',
-          'argon_pos_bullmq_jobs_total - Total de trabajos en colas',
-          'argon_pos_bullmq_job_duration_seconds - Tiempo de procesamiento de trabajos',
-          'argon_pos_bullmq_queue_size - Trabajos esperando en colas',
-          'argon_pos_bullmq_active_jobs - Trabajos activos',
-          'argon_pos_bullmq_failed_jobs - Trabajos fallidos',
-          'argon_pos_db_queries_total - Total de consultas SQL',
-          'argon_pos_db_query_duration_seconds - Tiempo de consultas SQL',
-          'argon_pos_db_slow_queries_total - Consultas lentas (>1s)',
-          'argon_pos_db_active_connections - Conexiones activas a DB',
-          'argon_pos_db_connection_pool_size - Tamaño del pool de conexiones',
-          'argon_pos_system_* - Métricas del sistema (CPU, memoria, GC)',
-        ],
-      },
-    };
-  }
+        return {
+            timestamp: new Date().toISOString(),
+            system: {
+                name: 'Argon POS API',
+                version: '1.0.0',
+                uptime: process.uptime(),
+                memory: process.memoryUsage(),
+                cpu: process.cpuUsage(),
+            },
+            queues: queueStats,
+            database: dbStats,
+            metrics: {
+                description: 'Estadísticas detalladas del sistema POS Argon',
+                endpoints: {
+                    prometheus: '/metrics - Métricas en formato Prometheus',
+                    stats: '/metrics/stats - Estadísticas detalladas (este endpoint)',
+                    health: '/health - Estado general del sistema',
+                },
+                available_metrics: [
+                    'argon_pos_http_requests_total - Total de requests HTTP',
+                    'argon_pos_http_request_duration_seconds - Tiempo de respuesta HTTP',
+                    'argon_pos_http_active_connections - Conexiones HTTP activas',
+                    'argon_pos_rate_limit_hits_total - Intentos bloqueados por rate limiting',
+                    'argon_pos_bullmq_jobs_total - Total de trabajos en colas',
+                    'argon_pos_bullmq_job_duration_seconds - Tiempo de procesamiento de trabajos',
+                    'argon_pos_bullmq_queue_size - Trabajos esperando en colas',
+                    'argon_pos_bullmq_active_jobs - Trabajos activos',
+                    'argon_pos_bullmq_failed_jobs - Trabajos fallidos',
+                    'argon_pos_db_queries_total - Total de consultas SQL',
+                    'argon_pos_db_query_duration_seconds - Tiempo de consultas SQL',
+                    'argon_pos_db_slow_queries_total - Consultas lentas (>1s)',
+                    'argon_pos_db_active_connections - Conexiones activas a DB',
+                    'argon_pos_db_connection_pool_size - Tamaño del pool de conexiones',
+                    'argon_pos_system_* - Métricas del sistema (CPU, memoria, GC)',
+                ],
+            },
+        };
+    }
 
-  /**
-   * 🎨 DASHBOARD WEB INTERACTIVO
-   * 
-   * Dashboard visual con gráficos y métricas en tiempo real
-   */
-  @Public()
-  @Get('dashboard')
-  async getDashboard(@Res() res: Response) {
-    const queueStats = await this.bullMQMetrics.getQueueStats();
-    const dbStats = await this.typeORMMetrics.getDatabaseStats();
-    const uptime = process.uptime();
-    const memory = process.memoryUsage();
+    /**
+     * 🎨 DASHBOARD WEB INTERACTIVO
+     *
+     * Dashboard visual con gráficos y métricas en tiempo real
+     */
+    @Public()
+    @Get('dashboard')
+    async getDashboard(@Res() res: Response) {
+        const queueStats = await this.bullMQMetrics.getQueueStats();
+        const dbStats = this.typeORMMetrics.getDatabaseStats();
+        const uptime = process.uptime();
+        const memory = process.memoryUsage();
 
-    const html = `
+        const html = `
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -462,7 +463,7 @@ export class MetricsController {
 </html>
     `;
 
-    res.set('Content-Type', 'text/html');
-    res.send(html);
-  }
+        res.set('Content-Type', 'text/html');
+        res.send(html);
+    }
 }

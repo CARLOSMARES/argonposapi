@@ -1,20 +1,33 @@
-import { Body, Controller, Delete, Get, Inject, Param, ParseIntPipe, Patch, Post, UseGuards, UseInterceptors, UploadedFile, BadRequestException } from '@nestjs/common';
-import { ApiTags, ApiConsumes, ApiBody } from '@nestjs/swagger';
+import {
+  BadRequestException,
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Inject,
+  Param,
+  ParseIntPipe,
+  Patch,
+  Post,
+  UploadedFile,
+  UseGuards,
+  UseInterceptors,
+} from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
+import { ApiBody, ApiConsumes, ApiTags } from '@nestjs/swagger';
 import { diskStorage } from 'multer';
 import { extname } from 'path';
-import { CreateProductsDto, UpdateProductsDto } from 'src/dto/products.dto';
-import { ProductsService } from 'src/service/products/products.service';
-import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
+import { JwtAuthGuard } from '../../auth/jwt-auth.guard';
+import { CreateProductsDto, UpdateProductsDto } from '../../dto/products.dto';
+import { ProductsService } from '../../service/products/products.service';
 
 @ApiTags('products')
 @Controller('products')
 export class ProductsController {
-
   constructor(
     @Inject()
-    private readonly productsService: ProductsService
-  ) {}
+    private readonly productsService: ProductsService,
+  ) { }
 
   @Post()
   @UseGuards(JwtAuthGuard)
@@ -52,26 +65,33 @@ export class ProductsController {
 
   @Post('upload-photo/:id')
   @UseGuards(JwtAuthGuard)
-  @UseInterceptors(FileInterceptor('photo', {
-    storage: diskStorage({
-      destination: './fotos',
-      filename: (req, file, callback) => {
-        const productId = req.params.id;
-        const fileExtName = extname(file.originalname);
-        const fileName = `product_${productId}_${Date.now()}${fileExtName}`;
-        callback(null, fileName);
+  @UseInterceptors(
+    FileInterceptor('photo', {
+      storage: diskStorage({
+        destination: './fotos',
+        filename: (req, file, callback) => {
+          const productId = req.params.id;
+          const fileExtName = extname(file.originalname);
+          const fileName = `product_${productId}_${Date.now()}${fileExtName}`;
+          callback(null, fileName);
+        },
+      }),
+      fileFilter: (req, file, callback) => {
+        if (!file.mimetype.match(/\/(jpg|jpeg|png|gif|webp)$/)) {
+          return callback(
+            new BadRequestException(
+              'Solo se permiten archivos de imagen (JPG, JPEG, PNG, GIF, WEBP)',
+            ),
+            false,
+          );
+        }
+        callback(null, true);
+      },
+      limits: {
+        fileSize: 5 * 1024 * 1024, // 5MB
       },
     }),
-    fileFilter: (req, file, callback) => {
-      if (!file.mimetype.match(/\/(jpg|jpeg|png|gif|webp)$/)) {
-        return callback(new BadRequestException('Solo se permiten archivos de imagen (JPG, JPEG, PNG, GIF, WEBP)'), false);
-      }
-      callback(null, true);
-    },
-    limits: {
-      fileSize: 5 * 1024 * 1024, // 5MB
-    },
-  }))
+  )
   @ApiConsumes('multipart/form-data')
   @ApiBody({
     schema: {
@@ -93,8 +113,10 @@ export class ProductsController {
     }
 
     const photoUrl = `/fotos/${file.filename}`;
-    const updatedProduct = await this.productsService.update(id, { photo_url: photoUrl });
-    
+    const updatedProduct = await this.productsService.update(id, {
+      photo_url: photoUrl,
+    });
+
     return {
       success: true,
       message: 'Foto subida exitosamente',

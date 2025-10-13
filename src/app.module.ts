@@ -27,6 +27,7 @@ import { User } from './entities/user.entity';
 import { CustomThrottlerGuard } from './guards/custom-throttler.guard';
 import { LoggingInterceptor } from './interceptors/logging.interceptor';
 import { PrometheusInterceptor } from './interceptors/prometheus.interceptor';
+import { LoginsModule } from './logins/logins.module';
 import { TypeORMMetricsService } from './metrics/typeorm-metrics.service';
 import { QueuesModule } from './queues/queues.module';
 import { CategoriesService } from './service/categories/categories.service';
@@ -83,6 +84,7 @@ import { UserService } from './service/user/user.service';
     ]),
     AuthModule,
     QueuesModule,
+    LoginsModule,
   ],
   controllers: [
     UserController,
@@ -122,4 +124,4 @@ import { UserService } from './service/user/user.service';
     },
   ],
 })
-export class AppModule { }
+export class AppModule {}

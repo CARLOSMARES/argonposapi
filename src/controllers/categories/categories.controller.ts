@@ -1,17 +1,30 @@
-import { Body, Controller, Delete, Get, Inject, Param, ParseIntPipe, Patch, Post, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Inject,
+  Param,
+  ParseIntPipe,
+  Patch,
+  Post,
+  UseGuards,
+} from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
-import { CreateCategoriesDto, UpdateCategoriesDto } from 'src/dto/categories.dto';
-import { CategoriesService } from 'src/service/categories/categories.service';
-import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
+import { JwtAuthGuard } from '../../auth/jwt-auth.guard';
+import {
+  CreateCategoriesDto,
+  UpdateCategoriesDto,
+} from '../../dto/categories.dto';
+import { CategoriesService } from '../../service/categories/categories.service';
 
 @ApiTags('categories')
 @Controller('categories')
 export class CategoriesController {
-
   constructor(
     @Inject()
-    private readonly categoriesService: CategoriesService
-  ) {}
+    private readonly categoriesService: CategoriesService,
+  ) { }
 
   @Post()
   @UseGuards(JwtAuthGuard)

@@ -1,8 +1,19 @@
-import { Injectable, NestInterceptor, ExecutionContext, CallHandler } from '@nestjs/common';
+import {
+  CallHandler,
+  ExecutionContext,
+  Injectable,
+  NestInterceptor,
+} from '@nestjs/common';
+import { Response } from 'express';
+import {
+  Counter,
+  Gauge,
+  Histogram,
+  collectDefaultMetrics,
+  register,
+} from 'prom-client';
 import { Observable } from 'rxjs';
-import { tap, catchError } from 'rxjs/operators';
-import { Request, Response } from 'express';
-import { register, Counter, Histogram, Gauge, collectDefaultMetrics } from 'prom-client';
+import { catchError, tap } from 'rxjs/operators';
 
 // ============================================================================
 // MÉTRICAS HTTP - Sistema POS Argon
@@ -10,14 +21,14 @@ import { register, Counter, Histogram, Gauge, collectDefaultMetrics } from 'prom
 
 /**
  * 📊 TOTAL DE REQUESTS HTTP
- * 
+ *
  * Descripción: Cuenta todos los requests procesados por el sistema POS
- * Útil para: 
+ * Útil para:
  *   - Monitorear tráfico en tiempo real
  *   - Detectar picos de uso (Black Friday, promociones)
  *   - Identificar endpoints más utilizados
  *   - Detectar patrones de uso por tipo de usuario
- * 
+ *
  * Labels:
  *   - method: GET, POST, PUT, DELETE
  *   - endpoint: /facturas, /products, /auth/login, etc.
@@ -32,14 +43,14 @@ const httpRequestsTotal = new Counter({
 
 /**
  * ⏱️ DURACIÓN DE REQUESTS HTTP
- * 
+ *
  * Descripción: Mide el tiempo de respuesta de cada request
  * Útil para:
  *   - Detectar APIs lentas que afectan la experiencia del usuario
  *   - Optimizar endpoints con mayor latencia
  *   - Configurar timeouts apropiados
  *   - Monitorear SLA de respuesta
- * 
+ *
  * Buckets optimizados para POS:
  *   - 0.1s: Excelente (instantáneo)
  *   - 0.5s: Bueno (aceptable para POS)
@@ -56,7 +67,7 @@ const httpRequestDuration = new Histogram({
 
 /**
  * 🔗 CONEXIONES HTTP ACTIVAS
- * 
+ *
  * Descripción: Cuenta conexiones HTTP simultáneas en tiempo real
  * Útil para:
  *   - Monitorear carga actual del sistema
@@ -71,14 +82,14 @@ const activeConnections = new Gauge({
 
 /**
  * 🚫 INTENTOS BLOQUEADOS POR RATE LIMITING
- * 
+ *
  * Descripción: Cuenta intentos bloqueados por límites de velocidad
  * Útil para:
  *   - Detectar ataques de fuerza bruta
  *   - Identificar usuarios con comportamiento anómalo
  *   - Ajustar límites de rate limiting
  *   - Monitorear seguridad del sistema
- * 
+ *
  * Labels:
  *   - user_id: ID del usuario (si está autenticado)
  *   - ip_address: Dirección IP del cliente
@@ -92,7 +103,7 @@ const rateLimitHits = new Counter({
 
 /**
  * 💻 MÉTRICAS DEL SISTEMA
- * 
+ *
  * Descripción: Métricas del servidor (CPU, memoria, GC, etc.)
  * Útil para:
  *   - Monitorear recursos del servidor
@@ -112,19 +123,26 @@ collectDefaultMetrics({
 @Injectable()
 export class PrometheusInterceptor implements NestInterceptor {
   intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
-    const request = context.switchToHttp().getRequest<Request>();
     const response = context.switchToHttp().getResponse<Response>();
-    const { method, route } = request;
-    
+    const rawReq = context.switchToHttp().getRequest<unknown>();
+    const reqObj = rawReq as Record<string, unknown> | undefined;
+    const method = typeof reqObj?.method === 'string' ? reqObj.method : 'GET';
+
     // Determinar tipo de usuario
-    const userType = this.getUserType(request);
-    const userId = (request as any).user?.userId || 'anonymous';
-    const ip = request.ip || 'unknown';
-    
+    const user = (reqObj?.user as { role?: string } | undefined) ?? undefined;
+    const userType = this.getUserType(user);
+
     // Normalizar endpoint (remover IDs dinámicos)
-    const endpoint = this.normalizeEndpoint(route?.path || request.url.split('?')[0]);
+    const maybeRoute = reqObj?.route as { path?: unknown } | undefined;
+    const rawPath =
+      typeof maybeRoute?.path === 'string'
+        ? maybeRoute.path
+        : typeof reqObj?.url === 'string'
+          ? reqObj.url
+          : '/';
+    const endpoint = this.normalizeEndpoint(rawPath);
     const startTime = Date.now();
-    
+
     // Incrementar conexiones activas
     activeConnections.inc();
 
@@ -132,7 +150,7 @@ export class PrometheusInterceptor implements NestInterceptor {
       tap(() => {
         const duration = (Date.now() - startTime) / 1000;
         const statusCode = response.statusCode;
-        
+
         // Registrar métricas de éxito
         httpRequestsTotal.inc({
           method,
@@ -140,19 +158,23 @@ export class PrometheusInterceptor implements NestInterceptor {
           status_code: statusCode.toString(),
           user_type: userType,
         });
-        
+
         httpRequestDuration.observe(
           { method, endpoint, user_type: userType },
           duration,
         );
-        
+
         // Decrementar conexiones activas
         activeConnections.dec();
       }),
       catchError((error) => {
         const duration = (Date.now() - startTime) / 1000;
-        const statusCode = error.status || 500;
-        
+        const maybeStatus = (error as unknown as { status?: unknown })?.status;
+        let statusCode = 500;
+        if (typeof maybeStatus === 'number') statusCode = maybeStatus;
+        else if (typeof maybeStatus === 'string')
+          statusCode = Number(maybeStatus) || 500;
+
         // Registrar métricas de error
         httpRequestsTotal.inc({
           method,
@@ -160,15 +182,15 @@ export class PrometheusInterceptor implements NestInterceptor {
           status_code: statusCode.toString(),
           user_type: userType,
         });
-        
+
         httpRequestDuration.observe(
           { method, endpoint, user_type: userType },
           duration,
         );
-        
+
         // Decrementar conexiones activas
         activeConnections.dec();
-        
+
         throw error;
       }),
     );
@@ -177,9 +199,7 @@ export class PrometheusInterceptor implements NestInterceptor {
   /**
    * Determina el tipo de usuario para las métricas
    */
-  private getUserType(request: Request): string {
-    const user = (request as any).user;
-    
+  private getUserType(user?: { role?: string }): string {
     if (!user) return 'anonymous';
     if (user.role === 'admin') return 'admin';
     if (user.role === 'cashier') return 'cashier';
@@ -193,10 +213,10 @@ export class PrometheusInterceptor implements NestInterceptor {
    */
   private normalizeEndpoint(path: string): string {
     return path
-      .replace(/\/\d+/g, '/:id')           // IDs numéricos
+      .replace(/\/\d+/g, '/:id') // IDs numéricos
       .replace(/\/[a-f0-9-]{36}/g, '/:uuid') // UUIDs
       .replace(/\/[a-f0-9-]{24}/g, '/:objectId') // ObjectIds
-      .replace(/\?.*$/, '');               // Remover query params
+      .replace(/\?.*$/, ''); // Remover query params
   }
 }
 
@@ -210,11 +230,15 @@ export class PrometheusInterceptor implements NestInterceptor {
  * @param ip Dirección IP
  * @param reason Razón del bloqueo
  */
-export function recordRateLimitHit(userId: string, ip: string, reason: string = 'rate_limit') {
-  rateLimitHits.inc({ 
-    user_id: userId, 
+export function recordRateLimitHit(
+  userId: string,
+  ip: string,
+  reason: string = 'rate_limit',
+) {
+  rateLimitHits.inc({
+    user_id: userId,
     ip_address: ip,
-    reason 
+    reason,
   });
 }
 

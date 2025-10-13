@@ -1,15 +1,17 @@
-import { Test } from '@nestjs/testing';
-import { HealthController } from './health.controller';
 import { getQueueToken } from '@nestjs/bullmq';
+import { Test } from '@nestjs/testing';
 import { DataSource } from 'typeorm';
+import { HealthController } from './health.controller';
 
 describe('HealthController', () => {
   let controller: HealthController;
-  const queueClientMock = { ping: jest.fn().mockResolvedValue('PONG') };
+  const queueClientMock: Partial<Record<'ping', jest.Mock>> = {
+    ping: jest.fn().mockResolvedValue('PONG'),
+  };
   const queueMock = { client: Promise.resolve(queueClientMock) };
-  const dsMock = {
+  const dsMock: Partial<DataSource> = {
     query: jest.fn().mockResolvedValue([{ '1': 1 }]),
-  } as unknown as DataSource;
+  } as Partial<DataSource>;
 
   beforeEach(async () => {
     const moduleRef = await Test.createTestingModule({
@@ -29,5 +31,3 @@ describe('HealthController', () => {
     expect(res).toEqual({ status: 'ok', redis: 'PONG', db: true });
   });
 });
-
-

@@ -1,18 +1,16 @@
-import { Column, Entity, PrimaryGeneratedColumn } from "typeorm";
+import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
 
-@Entity("providers")
+@Entity('providers')
 export class providers {
+  @PrimaryGeneratedColumn()
+  id: number;
 
-    @PrimaryGeneratedColumn()
-    id: number
+  @Column()
+  name: string;
 
-    @Column()
-    name: string
+  @Column()
+  phone: string;
 
-    @Column()
-    phone: string
-
-    @Column()
-    representante: string
-
+  @Column()
+  representante: string;
 }

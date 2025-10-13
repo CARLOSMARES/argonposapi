@@ -1,27 +1,28 @@
+import { getQueueToken } from '@nestjs/bullmq';
 import { INestApplication, ValidationPipe } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
-import * as request from 'supertest';
-import { AppModule } from '../src/app.module';
 import { getRepositoryToken } from '@nestjs/typeorm';
-import { User } from '../src/entities/user.entity';
-import { company } from '../src/entities/company.entity';
-import { facturas } from '../src/entities/facturas.entity';
-import { products } from '../src/entities/products.entity';
-import { providers } from '../src/entities/providers.entity';
-import { stock } from '../src/entities/stock.entity';
+import * as request from 'supertest';
 import { DataSource, Repository } from 'typeorm';
-import { getQueueToken } from '@nestjs/bullmq';
-import { InvoicesProcessor } from '../src/queues/workers/invoices.processor';
+import { company } from '../../../entities/company.entity';
+import { facturas } from '../../../entities/facturas.entity';
+import { products } from '../../../entities/products.entity';
+import { providers } from '../../../entities/providers.entity';
+import { stock } from '../../../entities/stock.entity';
+import { User } from '../../../entities/user.entity';
+import { InvoicesProcessor } from '../../../queues/workers/invoices.processor';
+import { AppModule } from '../src/app.module';
 
 describe('App E2E', () => {
   let app: INestApplication;
-  const repoMock = () => ({
-    create: jest.fn((x) => x),
-    save: jest.fn(async (x) => ({ id: 1, ...x })),
-    find: jest.fn(async () => []),
-    findOne: jest.fn(async ({ where: { id } }: any) => ({ id })),
-    delete: jest.fn(async () => ({ affected: 1 })),
-  }) as unknown as Repository<any>;
+  const repoMock = () =>
+    ({
+      create: jest.fn((x) => x),
+      save: jest.fn(async (x) => ({ id: 1, ...x })),
+      find: jest.fn(async () => []),
+      findOne: jest.fn(async ({ where: { id } }: any) => ({ id })),
+      delete: jest.fn(async () => ({ affected: 1 })),
+    }) as unknown as Repository<any>;
 
   beforeAll(async () => {
     const moduleRef = await Test.createTestingModule({
@@ -44,11 +45,16 @@ describe('App E2E', () => {
       .overrideProvider(DataSource)
       .useValue({ query: jest.fn(async () => [{ '1': 1 }]) })
       .overrideProvider(getQueueToken('invoices'))
-      .useValue({ client: Promise.resolve({ ping: jest.fn(async () => 'PONG') }), add: jest.fn() })
+      .useValue({
+        client: Promise.resolve({ ping: jest.fn(async () => 'PONG') }),
+        add: jest.fn(),
+      })
       .compile();
 
     app = moduleRef.createNestApplication();
-    app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
+    app.useGlobalPipes(
+      new ValidationPipe({ whitelist: true, transform: true }),
+    );
     await app.init();
   });
 
@@ -82,12 +88,12 @@ describe('App E2E', () => {
   it('POST /user (registro público)', async () => {
     await request(app.getHttpServer())
       .post('/user')
-      .send({ 
-        name: 'Test', 
-        lastname: 'User', 
-        user: 'testuser', 
-        password: 'test123', 
-        email: 'test@example.com' 
+      .send({
+        name: 'Test',
+        lastname: 'User',
+        user: 'testuser',
+        password: 'test123',
+        email: 'test@example.com',
       })
       .expect(201);
   });
@@ -116,5 +122,3 @@ describe('App E2E', () => {
     await request(app.getHttpServer()).get('/user').expect(401);
   });
 });
-
-

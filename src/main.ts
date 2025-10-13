@@ -27,16 +27,18 @@ async function bootstrap() {
   const serverAdapter = new ExpressAdapter();
   serverAdapter.setBasePath('/queues');
   const invoicesQueue = app.get<Queue>(getQueueToken('invoices'));
+  // createBullBoard expects runtime values; adapter constructors are typed loosely
   createBullBoard({
-    queues: [new BullMQAdapter(invoicesQueue)],
+    queues: [new BullMQAdapter(invoicesQueue as unknown as any)],
     serverAdapter,
   });
-  const expressApp = app.getHttpAdapter().getInstance();
+  const expressApp = app.getHttpAdapter().getInstance() as express.Application;
   expressApp.use('/queues', serverAdapter.getRouter());
 
   // Servir archivos estáticos de fotos
   expressApp.use('/fotos', express.static(join(__dirname, '..', 'fotos')));
 
+  // start server (lint: ensure promise is awaited)
   await app.listen(process.env.PORT ?? 3000);
 }
 bootstrap();

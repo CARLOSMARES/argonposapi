@@ -1,21 +1,24 @@
+import { ConfigService } from '@nestjs/config';
+import { JwtService } from '@nestjs/jwt';
 import { Test } from '@nestjs/testing';
+import { getRepositoryToken } from '@nestjs/typeorm';
+import { User } from '../../entities/user.entity';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
-import { JwtService } from '@nestjs/jwt';
-import { ConfigService } from '@nestjs/config';
-import { getRepositoryToken } from '@nestjs/typeorm';
-import { User } from 'src/entities/user.entity';
-
 
 describe('AuthController', () => {
   let controller: AuthController;
   let service: AuthService;
 
   const userRepoMock = {
-    findOne: jest.fn(),
+    findOne: jest.fn() as jest.Mock<Promise<any>, [any]>,
   };
-  const jwtMock = { signAsync: jest.fn().mockResolvedValue('token') } as unknown as JwtService;
-  const configMock = { get: jest.fn().mockReturnValue('secret') } as unknown as ConfigService;
+  const jwtMock: Partial<JwtService> = {
+    signAsync: jest.fn().mockResolvedValue('token'),
+  };
+  const configMock: Partial<ConfigService> = {
+    get: jest.fn().mockReturnValue('secret'),
+  };
 
   beforeEach(async () => {
     const moduleRef = await Test.createTestingModule({
@@ -34,10 +37,18 @@ describe('AuthController', () => {
   });
 
   it('POST /auth/login retorna access_token', async () => {
-    (userRepoMock.findOne as any).mockResolvedValue({ id: 1, username: 'u', password: await Promise.resolve('$2b$10$K4Y8Jx.MOCKEDHASH...............') });
+    userRepoMock.findOne.mockResolvedValue({
+      id: 1,
+      username: 'u',
+      password: await Promise.resolve(
+        '$2b$10$K4Y8Jx.MOCKEDHASH...............',
+      ),
+    });
     // mockear validateUser por simplicidad
-    jest.spyOn(service as any, 'validateUser').mockResolvedValue({ id: 1, username: 'u' } as any);
-    jest.spyOn(service as any, 'login');
+    jest
+      .spyOn(service as unknown as { validateUser: jest.Mock }, 'validateUser')
+      .mockResolvedValue({ id: 1, username: 'u' });
+    jest.spyOn(service as unknown as { login: jest.Mock }, 'login');
     const res = await controller.login({ username: 'u', password: 'p' });
     expect(res).toEqual({ access_token: 'token', refresh_token: 'token' });
   });

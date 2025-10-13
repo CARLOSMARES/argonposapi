@@ -1,17 +1,27 @@
-import { Body, Controller, Delete, Get, Inject, Param, ParseIntPipe, Patch, Post, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Inject,
+  Param,
+  ParseIntPipe,
+  Patch,
+  Post,
+  UseGuards,
+} from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
-import { CreateStockDto, UpdateStockDto } from 'src/dto/stock.dto';
-import { StockService } from 'src/service/stock/stock.service';
-import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
+import { JwtAuthGuard } from '../../auth/jwt-auth.guard';
+import { CreateStockDto, UpdateStockDto } from '../../dto/stock.dto';
+import { StockService } from '../../service/stock/stock.service';
 
 @ApiTags('stock')
 @Controller('stock')
 export class StockController {
-
   constructor(
     @Inject()
-    private readonly stockService: StockService
-  ) {}
+    private readonly stockService: StockService,
+  ) { }
 
   @Post()
   @UseGuards(JwtAuthGuard)

@@ -1,7 +1,7 @@
 import { OnWorkerEvent, Processor, WorkerHost } from '@nestjs/bullmq';
 import { Logger } from '@nestjs/common';
 import { Job } from 'bullmq';
-import { BullMQMetricsService } from 'src/metrics/bullmq-metrics.service';
+import { BullMQMetricsService } from '../../metrics/bullmq-metrics.service';
 
 @Processor('invoices')
 export class InvoicesProcessor extends WorkerHost {
@@ -11,14 +11,18 @@ export class InvoicesProcessor extends WorkerHost {
     super();
   }
 
-  async process(job: Job<any, any, string>): Promise<any> {
+  async process(
+    job: Job<Record<string, unknown>, any, string>,
+  ): Promise<Record<string, unknown> | { skipped: true; name: string }> {
     const startTime = Date.now();
-    
+
     try {
       if (job.name === 'generate-pdf') {
         // Simulación de trabajo pesado
         await new Promise((res) => setTimeout(res, 500));
-        return { ok: true, invoiceId: job.data.id };
+        // job.data can be any shape; access safely
+        const invoiceId = job.data['id'];
+        return { ok: true, invoiceId };
       }
       return { skipped: true, name: job.name };
     } finally {
@@ -35,7 +39,9 @@ export class InvoicesProcessor extends WorkerHost {
 
   @OnWorkerEvent('completed')
   onCompleted(job: Job, result: any) {
-    this.logger.log(`Job completed: ${job.name} id=${job.id} result=${JSON.stringify(result)}`);
+    this.logger.log(
+      `Job completed: ${job.name} id=${job.id} result=${JSON.stringify(result)}`,
+    );
     this.metricsService.recordJobEvent('invoices', job.name, 'completed');
   }
 
@@ -49,5 +55,3 @@ export class InvoicesProcessor extends WorkerHost {
     }
   }
 }
-
-

@@ -1,7 +1,7 @@
+import { CallHandler, ExecutionContext } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
-import { PrometheusInterceptor } from './prometheus.interceptor';
-import { ExecutionContext, CallHandler } from '@nestjs/common';
 import { of, throwError } from 'rxjs';
+import { PrometheusInterceptor } from './prometheus.interceptor';
 
 describe('PrometheusInterceptor', () => {
   let interceptor: PrometheusInterceptor;
@@ -14,7 +14,7 @@ describe('PrometheusInterceptor', () => {
     }).compile();
 
     interceptor = moduleRef.get<PrometheusInterceptor>(PrometheusInterceptor);
-    
+
     mockExecutionContext = {
       switchToHttp: () => ({
         getRequest: () => ({
@@ -31,8 +31,8 @@ describe('PrometheusInterceptor', () => {
     } as ExecutionContext;
 
     mockCallHandler = {
-      handle: () => of({ data: 'test' }),
-    };
+      handle: (() => of({ data: 'test' })) as CallHandler['handle'],
+    } as CallHandler;
   });
 
   it('should record metrics for successful requests', (done) => {

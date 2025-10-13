@@ -1,17 +1,30 @@
-import { Body, Controller, Delete, Get, Inject, Param, ParseIntPipe, Patch, Post, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Inject,
+  Param,
+  ParseIntPipe,
+  Patch,
+  Post,
+  UseGuards,
+} from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
-import { CreateProductTypesDto, UpdateProductTypesDto } from 'src/dto/product_types.dto';
-import { ProductTypesService } from 'src/service/product_types/product_types.service';
-import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
+import { JwtAuthGuard } from '../../auth/jwt-auth.guard';
+import {
+  CreateProductTypesDto,
+  UpdateProductTypesDto,
+} from '../../dto/product_types.dto';
+import { ProductTypesService } from '../../service/product_types/product_types.service';
 
 @ApiTags('product-types')
 @Controller('product-types')
 export class ProductTypesController {
-
   constructor(
     @Inject()
-    private readonly productTypesService: ProductTypesService
-  ) {}
+    private readonly productTypesService: ProductTypesService,
+  ) { }
 
   @Post()
   @UseGuards(JwtAuthGuard)

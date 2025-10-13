@@ -1,7 +1,7 @@
-import { Injectable, OnModuleInit } from '@nestjs/common';
 import { InjectQueue } from '@nestjs/bullmq';
+import { Injectable, OnModuleInit } from '@nestjs/common';
 import { Queue } from 'bullmq';
-import { Counter, Histogram, Gauge, register } from 'prom-client';
+import { Counter, Gauge, Histogram, register } from 'prom-client';
 
 // ============================================================================
 // MÉTRICAS BULLMQ - Sistema de Colas POS Argon
@@ -9,14 +9,14 @@ import { Counter, Histogram, Gauge, register } from 'prom-client';
 
 /**
  * 📋 TOTAL DE TRABAJOS PROCESADOS
- * 
+ *
  * Descripción: Cuenta todos los trabajos procesados por las colas
  * Útil para:
  *   - Monitorear volumen de trabajo asíncrono
  *   - Detectar picos en generación de PDFs
  *   - Identificar trabajos más frecuentes
  *   - Medir productividad del sistema
- * 
+ *
  * Labels:
  *   - queue: invoices, reports, notifications
  *   - job_name: generate-pdf, send-email, sync-data
@@ -31,14 +31,14 @@ const jobCounter = new Counter({
 
 /**
  * ⏱️ DURACIÓN DE TRABAJOS
- * 
+ *
  * Descripción: Mide el tiempo que toma procesar cada trabajo
  * Útil para:
  *   - Optimizar trabajos lentos (generación de PDFs)
  *   - Configurar timeouts apropiados
  *   - Identificar trabajos que necesitan optimización
  *   - Monitorear SLA de procesamiento
- * 
+ *
  * Buckets optimizados para trabajos POS:
  *   - 0.1s: Muy rápido (cálculos simples)
  *   - 0.5s: Rápido (consultas DB)
@@ -57,7 +57,7 @@ const jobDuration = new Histogram({
 
 /**
  * 📦 TRABAJOS EN COLA (ESPERANDO)
- * 
+ *
  * Descripción: Cuenta trabajos que están esperando ser procesados
  * Útil para:
  *   - Detectar acumulación de trabajos
@@ -74,7 +74,7 @@ const queueSize = new Gauge({
 
 /**
  * 🔄 TRABAJOS ACTIVOS (PROCESÁNDOSE)
- * 
+ *
  * Descripción: Cuenta trabajos que están siendo procesados actualmente
  * Útil para:
  *   - Monitorear carga actual de workers
@@ -91,7 +91,7 @@ const activeJobs = new Gauge({
 
 /**
  * ❌ TRABAJOS FALLIDOS
- * 
+ *
  * Descripción: Cuenta trabajos que han fallado
  * Útil para:
  *   - Detectar problemas en el procesamiento
@@ -108,7 +108,7 @@ const failedJobs = new Gauge({
 
 /**
  * 🔁 TRABAJOS REINTENTANDO
- * 
+ *
  * Descripción: Cuenta trabajos que están siendo reintentados
  * Útil para:
  *   - Monitorear trabajos inestables
@@ -129,21 +129,21 @@ const retryingJobs = new Gauge({
 
 @Injectable()
 export class BullMQMetricsService implements OnModuleInit {
-  constructor(
-    @InjectQueue('invoices') private readonly invoicesQueue: Queue,
-  ) {}
+  constructor(@InjectQueue('invoices') private readonly invoicesQueue: Queue) {}
 
-  async onModuleInit() {
-    await this.setupQueueMetrics();
+  onModuleInit() {
+    // setupQueueMetrics uses setInterval and is synchronous
+    this.setupQueueMetrics();
   }
 
   /**
    * Configura las métricas de la cola
    */
-  private async setupQueueMetrics() {
+  private setupQueueMetrics() {
     // Actualizar métricas de estado de cola periódicamente
-    setInterval(async () => {
-      await this.updateQueueMetrics();
+    setInterval(() => {
+      // no-await in interval callback; fire-and-forget
+      void this.updateQueueMetrics();
     }, 5000); // Cada 5 segundos
   }
 
@@ -174,10 +174,7 @@ export class BullMQMetricsService implements OnModuleInit {
    * @param duration Duración en segundos
    */
   recordJobDuration(queueName: string, jobName: string, duration: number) {
-    jobDuration.observe(
-      { queue: queueName, job_name: jobName },
-      duration,
-    );
+    jobDuration.observe({ queue: queueName, job_name: jobName }, duration);
   }
 
   /**

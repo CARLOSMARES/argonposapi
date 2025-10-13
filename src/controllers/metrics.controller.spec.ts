@@ -1,14 +1,15 @@
 import { Test } from '@nestjs/testing';
-import { MetricsController } from './metrics.controller';
 import { Response } from 'express';
-import { BullMQMetricsService } from 'src/metrics/bullmq-metrics.service';
-import { TypeORMMetricsService } from 'src/metrics/typeorm-metrics.service';
+import { BullMQMetricsService } from '../../metrics/bullmq-metrics.service';
+import { TypeORMMetricsService } from '../../metrics/typeorm-metrics.service';
+import { MetricsController } from './metrics.controller';
 
 describe('MetricsController', () => {
   let controller: MetricsController;
-  let mockResponse: Partial<Response>;
+  let mockResponse: Partial<Record<'set' | 'send', jest.Mock>>;
 
-  const mockBullMQMetricsService = {
+  const mockBullMQMetricsService: Partial<Record<'getQueueStats', jest.Mock>> =
+  {
     getQueueStats: jest.fn().mockResolvedValue({
       queue: 'invoices',
       waiting: 0,
@@ -19,7 +20,9 @@ describe('MetricsController', () => {
     }),
   };
 
-  const mockTypeORMMetricsService = {
+  const mockTypeORMMetricsService: Partial<
+    Record<'getDatabaseStats', jest.Mock>
+  > = {
     getDatabaseStats: jest.fn().mockResolvedValue({
       activeConnections: 5,
       totalConnections: 10,
@@ -46,7 +49,7 @@ describe('MetricsController', () => {
     }).compile();
 
     controller = moduleRef.get<MetricsController>(MetricsController);
-    
+
     mockResponse = {
       set: jest.fn(),
       send: jest.fn(),
@@ -54,15 +57,18 @@ describe('MetricsController', () => {
   });
 
   it('should return metrics', async () => {
-    await controller.getMetrics(mockResponse as Response);
-    
-    expect(mockResponse.set).toHaveBeenCalledWith('Content-Type', 'text/plain; version=0.0.4; charset=utf-8');
+    await controller.getMetrics(mockResponse as unknown as Response);
+
+    expect(mockResponse.set).toHaveBeenCalledWith(
+      'Content-Type',
+      'text/plain; version=0.0.4; charset=utf-8',
+    );
     expect(mockResponse.send).toHaveBeenCalled();
   });
 
   it('should return detailed stats', async () => {
     const stats = await controller.getDetailedStats();
-    
+
     expect(stats).toHaveProperty('timestamp');
     expect(stats).toHaveProperty('system');
     expect(stats).toHaveProperty('queues');
@@ -73,12 +79,15 @@ describe('MetricsController', () => {
   });
 
   it('should return dashboard HTML', async () => {
-    await controller.getDashboard(mockResponse as Response);
-    
+    await controller.getDashboard(mockResponse as unknown as Response);
+
     expect(mockResponse.set).toHaveBeenCalledWith('Content-Type', 'text/html');
     expect(mockResponse.send).toHaveBeenCalled();
-    
-    const htmlContent = (mockResponse.send as jest.Mock).mock.calls[0][0];
+
+    const sendMock = mockResponse.send as jest.MockedFunction<
+      (...args: any[]) => any
+    >;
+    const htmlContent = sendMock.mock.calls[0][0] as string;
     expect(htmlContent).toContain('Argon POS Dashboard');
     expect(htmlContent).toContain('chart.js');
     expect(htmlContent).toContain('Chart.defaults');

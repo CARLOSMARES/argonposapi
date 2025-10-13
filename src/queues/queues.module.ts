@@ -1,9 +1,9 @@
+import { BullModule } from '@nestjs/bullmq';
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { BullModule } from '@nestjs/bullmq';
+import { BullMQMetricsService } from '../metrics/bullmq-metrics.service';
 import { QueuesService } from './queues.service';
 import { InvoicesProcessor } from './workers/invoices.processor';
-import { BullMQMetricsService } from 'src/metrics/bullmq-metrics.service';
 
 @Module({
   imports: [
@@ -34,6 +34,4 @@ import { BullMQMetricsService } from 'src/metrics/bullmq-metrics.service';
   providers: [QueuesService, InvoicesProcessor, BullMQMetricsService],
   exports: [QueuesService, BullMQMetricsService, BullModule],
 })
-export class QueuesModule {}
-
-
+export class QueuesModule { }

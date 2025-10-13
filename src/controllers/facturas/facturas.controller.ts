@@ -1,20 +1,30 @@
-import { Body, Controller, Delete, Get, Inject, Param, ParseIntPipe, Patch, Post, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Inject,
+  Param,
+  ParseIntPipe,
+  Patch,
+  Post,
+  UseGuards,
+} from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
-import { CreateFacturasDto, UpdateFacturasDto } from 'src/dto/facturas.dto';
-import { FacturasService } from 'src/service/facturas/facturas.service';
-import { QueuesService } from 'src/queues/queues.service';
-import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
+import { JwtAuthGuard } from '../../auth/jwt-auth.guard';
+import { CreateFacturasDto, UpdateFacturasDto } from '../../dto/facturas.dto';
+import { QueuesService } from '../../queues/queues.service';
+import { FacturasService } from '../../service/facturas/facturas.service';
 
 @ApiTags('facturas')
 @Controller('facturas')
 export class FacturasController {
-
   constructor(
     @Inject()
     private readonly facturasService: FacturasService,
     @Inject(QueuesService)
     private readonly queuesService: QueuesService,
-  ) {}
+  ) { }
 
   @Post()
   @UseGuards(JwtAuthGuard)

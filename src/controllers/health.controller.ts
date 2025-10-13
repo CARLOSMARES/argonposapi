@@ -1,16 +1,16 @@
-import { Controller, Get } from '@nestjs/common';
 import { InjectQueue } from '@nestjs/bullmq';
-import { Queue } from 'bullmq';
+import { Controller, Get } from '@nestjs/common';
 import { InjectDataSource } from '@nestjs/typeorm';
+import { Queue } from 'bullmq';
 import { DataSource } from 'typeorm';
-import { Public } from 'src/auth/public.decorator';
+import { Public } from '../auth/public.decorator';
 
 @Controller('health')
 export class HealthController {
   constructor(
     @InjectQueue('invoices') private readonly invoicesQueue: Queue,
     @InjectDataSource() private readonly dataSource: DataSource,
-  ) {}
+  ) { }
 
   @Public()
   @Get()
@@ -20,17 +20,23 @@ export class HealthController {
 
     try {
       await this.dataSource.query('SELECT 1');
-    } catch (e) {
+    } catch (err: unknown) {
+      const errorObj = err as { message?: unknown } | null;
+      const errorMsg =
+        errorObj && typeof errorObj.message === 'string'
+          ? errorObj.message
+          : typeof err === 'object' && err !== null
+            ? JSON.stringify(err)
+            : String(err);
+
       return {
         status: 'degraded',
         redis: redisOk,
         db: false,
-        error: String(e?.message ?? e),
+        error: errorMsg,
       };
     }
 
     return { status: 'ok', redis: redisOk, db: true };
   }
 }
-
-

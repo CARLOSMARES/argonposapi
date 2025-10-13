@@ -1,7 +1,7 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
 import { InjectDataSource } from '@nestjs/typeorm';
+import { Counter, Gauge, Histogram, register } from 'prom-client';
 import { DataSource } from 'typeorm';
-import { Counter, Histogram, Gauge, register } from 'prom-client';
 
 // ============================================================================
 // MÉTRICAS TYPEORM - Base de Datos POS Argon
@@ -9,14 +9,14 @@ import { Counter, Histogram, Gauge, register } from 'prom-client';
 
 /**
  * 🗄️ TOTAL DE QUERIES EJECUTADAS
- * 
+ *
  * Descripción: Cuenta todas las consultas SQL ejecutadas
  * Útil para:
  *   - Monitorear actividad de base de datos
  *   - Identificar tablas más consultadas
  *   - Detectar patrones de uso
  *   - Optimizar índices y consultas
- * 
+ *
  * Labels:
  *   - operation: SELECT, INSERT, UPDATE, DELETE
  *   - table: users, facturas, products, stock
@@ -31,14 +31,14 @@ const queryCounter = new Counter({
 
 /**
  * ⏱️ DURACIÓN DE QUERIES
- * 
+ *
  * Descripción: Mide el tiempo de ejecución de cada consulta
  * Útil para:
  *   - Identificar consultas lentas
  *   - Optimizar performance de DB
  *   - Detectar problemas de índices
  *   - Configurar timeouts apropiados
- * 
+ *
  * Buckets optimizados para DB POS:
  *   - 0.001s: Muy rápido (consultas simples)
  *   - 0.01s: Rápido (consultas con índices)
@@ -57,7 +57,7 @@ const queryDuration = new Histogram({
 
 /**
  * 🐌 QUERIES LENTAS (>1 SEGUNDO)
- * 
+ *
  * Descripción: Cuenta consultas que tardan más de 1 segundo
  * Útil para:
  *   - Identificar consultas problemáticas
@@ -74,7 +74,7 @@ const slowQueries = new Counter({
 
 /**
  * 🔗 CONEXIONES ACTIVAS
- * 
+ *
  * Descripción: Cuenta conexiones activas a la base de datos
  * Útil para:
  *   - Monitorear uso del pool de conexiones
@@ -90,7 +90,7 @@ const activeConnections = new Gauge({
 
 /**
  * 📊 TAMAÑO DEL POOL DE CONEXIONES
- * 
+ *
  * Descripción: Tamaño total del pool de conexiones
  * Útil para:
  *   - Monitorear configuración del pool
@@ -106,7 +106,7 @@ const connectionPoolSize = new Gauge({
 
 /**
  * ❌ QUERIES FALLIDAS
- * 
+ *
  * Descripción: Cuenta consultas que han fallado
  * Útil para:
  *   - Detectar problemas de base de datos
@@ -127,103 +127,114 @@ const failedQueries = new Counter({
 
 @Injectable()
 export class TypeORMMetricsService implements OnModuleInit {
-  constructor(
-    @InjectDataSource() private readonly dataSource: DataSource,
-  ) {}
+  constructor(@InjectDataSource() private readonly dataSource: DataSource) {}
 
-  async onModuleInit() {
-    await this.setupDatabaseMetrics();
+  onModuleInit() {
+    // setupDatabaseMetrics is synchronous
+    this.setupDatabaseMetrics();
   }
 
   /**
    * Configura las métricas de base de datos
    */
-  private async setupDatabaseMetrics() {
+  private setupDatabaseMetrics() {
     // Interceptar queries para medir performance
-    const originalQuery = this.dataSource.query.bind(this.dataSource);
-    
-    this.dataSource.query = async (query: string, parameters?: any[]) => {
+    const originalQuery = (
+      this.dataSource.query as unknown as (
+        query: string,
+        parameters?: unknown[],
+      ) => Promise<unknown>
+    ).bind(this.dataSource);
+
+    (
+      this.dataSource as {
+        query?: (q: string, p?: unknown[]) => Promise<unknown>;
+      }
+    ).query = async (query: string, parameters?: unknown[]) => {
       const startTime = Date.now();
-      
+
       try {
-        const result = await originalQuery(query, parameters);
+        const result: unknown = await originalQuery(query, parameters);
         const duration = (Date.now() - startTime) / 1000;
-        
+
         // Analizar la query
         const analysis = this.analyzeQuery(query);
-        
+
         // Registrar métricas de éxito
-        queryCounter.inc({ 
-          operation: analysis.operation, 
+        queryCounter.inc({
+          operation: analysis.operation,
           table: analysis.table,
-          complexity: analysis.complexity
+          complexity: analysis.complexity,
         });
-        
+
         queryDuration.observe(
-          { 
-            operation: analysis.operation, 
+          {
+            operation: analysis.operation,
             table: analysis.table,
-            complexity: analysis.complexity
-          }, 
-          duration
+            complexity: analysis.complexity,
+          },
+          duration,
         );
-        
+
         // Registrar queries lentas
         if (duration > 1) {
-          slowQueries.inc({ 
-            operation: analysis.operation, 
+          slowQueries.inc({
+            operation: analysis.operation,
             table: analysis.table,
-            complexity: analysis.complexity
+            complexity: analysis.complexity,
           });
         }
-        
+
         return result;
       } catch (error) {
         const duration = (Date.now() - startTime) / 1000;
         const analysis = this.analyzeQuery(query);
-        
+
         // Registrar métricas de error
-        queryCounter.inc({ 
-          operation: analysis.operation, 
+        queryCounter.inc({
+          operation: analysis.operation,
           table: analysis.table,
-          complexity: analysis.complexity
+          complexity: analysis.complexity,
         });
-        
+
         queryDuration.observe(
-          { 
-            operation: analysis.operation, 
+          {
+            operation: analysis.operation,
             table: analysis.table,
-            complexity: analysis.complexity
-          }, 
-          duration
+            complexity: analysis.complexity,
+          },
+          duration,
         );
-        
+
         // Registrar query fallida
-        failedQueries.inc({ 
-          operation: analysis.operation, 
+        failedQueries.inc({
+          operation: analysis.operation,
           table: analysis.table,
-          error_type: this.getErrorType(error)
+          error_type: this.getErrorType(error),
         });
-        
+
         throw error;
       }
     };
 
     // Actualizar métricas de conexiones periódicamente
-    setInterval(async () => {
-      await this.updateConnectionMetrics();
+    setInterval(() => {
+      // call and ignore the promise; updateConnectionMetrics may be synchronous
+      void this.updateConnectionMetrics();
     }, 10000); // Cada 10 segundos
   }
 
   /**
    * Actualiza las métricas de conexiones
    */
-  private async updateConnectionMetrics() {
+  private updateConnectionMetrics() {
     try {
-      const pool = (this.dataSource as any).driver?.master?.pool;
-      if (pool) {
-        activeConnections.set(pool.numUsedConnections());
-        connectionPoolSize.set(pool.numConnections());
+      const poolFns = this.getPoolFunctions();
+      if (poolFns?.numUsedConnections && poolFns?.numConnections) {
+        const used = Number(poolFns.numUsedConnections());
+        const total = Number(poolFns.numConnections());
+        activeConnections.set(used);
+        connectionPoolSize.set(total);
       }
     } catch (error) {
       console.error('❌ Error actualizando métricas de conexiones:', error);
@@ -233,9 +244,13 @@ export class TypeORMMetricsService implements OnModuleInit {
   /**
    * Analiza una query SQL para extraer información
    */
-  private analyzeQuery(query: string): { operation: string; table: string; complexity: string } {
+  private analyzeQuery(query: string): {
+    operation: string;
+    table: string;
+    complexity: string;
+  } {
     const trimmed = query.trim().toUpperCase();
-    
+
     // Determinar operación
     let operation = 'OTHER';
     if (trimmed.startsWith('SELECT')) operation = 'SELECT';
@@ -245,52 +260,106 @@ export class TypeORMMetricsService implements OnModuleInit {
     else if (trimmed.startsWith('CREATE')) operation = 'CREATE';
     else if (trimmed.startsWith('DROP')) operation = 'DROP';
     else if (trimmed.startsWith('ALTER')) operation = 'ALTER';
-    
+
     // Extraer tabla
     const tableMatch = query.match(/(?:FROM|INTO|UPDATE)\s+`?(\w+)`?/i);
     const table = tableMatch ? tableMatch[1] : 'unknown';
-    
+
     // Determinar complejidad
     let complexity = 'simple';
     if (trimmed.includes('JOIN')) complexity = 'join';
-    else if (trimmed.includes('GROUP BY') || trimmed.includes('ORDER BY')) complexity = 'complex';
-    else if (trimmed.includes('WHERE') && trimmed.includes('AND')) complexity = 'complex';
-    
+    else if (trimmed.includes('GROUP BY') || trimmed.includes('ORDER BY'))
+      complexity = 'complex';
+    else if (trimmed.includes('WHERE') && trimmed.includes('AND'))
+      complexity = 'complex';
+
     return { operation, table, complexity };
   }
 
   /**
    * Determina el tipo de error
    */
-  private getErrorType(error: any): string {
-    if (error.code === 'ER_DUP_ENTRY') return 'duplicate_key';
-    if (error.code === 'ER_NO_SUCH_TABLE') return 'table_not_found';
-    if (error.code === 'ER_BAD_FIELD_ERROR') return 'column_not_found';
-    if (error.code === 'ER_CONNECTION_LOST') return 'connection_lost';
-    if (error.code === 'ER_LOCK_WAIT_TIMEOUT') return 'lock_timeout';
+  private getErrorType(error: unknown): string {
+    const err = error as { code?: unknown } | null;
+    const code = typeof err?.code === 'string' ? err.code : undefined;
+    if (code === 'ER_DUP_ENTRY') return 'duplicate_key';
+    if (code === 'ER_NO_SUCH_TABLE') return 'table_not_found';
+    if (code === 'ER_BAD_FIELD_ERROR') return 'column_not_found';
+    if (code === 'ER_CONNECTION_LOST') return 'connection_lost';
+    if (code === 'ER_LOCK_WAIT_TIMEOUT') return 'lock_timeout';
     return 'unknown';
   }
 
   /**
    * Obtiene estadísticas detalladas de la base de datos
    */
-  async getDatabaseStats() {
+  getDatabaseStats() {
     try {
-      const pool = (this.dataSource as any).driver?.master?.pool;
-      if (!pool) return null;
+      const poolFns = this.getPoolFunctions();
+      if (!poolFns) return null;
 
-      const options = this.dataSource.options as any;
+      const options = this.dataSource.options as unknown as
+        | Record<string, unknown>
+        | undefined;
+      const used = poolFns.numUsedConnections
+        ? Number(poolFns.numUsedConnections())
+        : 0;
+      const total = poolFns.numConnections
+        ? Number(poolFns.numConnections())
+        : 0;
+      const host =
+        options && typeof options.host === 'string'
+          ? options.host
+          : 'localhost';
+      const port =
+        options && typeof options.port === 'number' ? options.port : 3306;
       return {
-        activeConnections: pool.numUsedConnections(),
-        totalConnections: pool.numConnections(),
-        connectionUtilization: (pool.numUsedConnections() / pool.numConnections()) * 100,
-        database: options.database,
-        host: options.host || 'localhost',
-        port: options.port || 3306,
+        activeConnections: used,
+        totalConnections: total,
+        connectionUtilization: total > 0 ? (used / total) * 100 : 0,
+        database: options?.database,
+        host,
+        port,
       };
     } catch (error) {
       console.error('❌ Error obteniendo estadísticas de DB:', error);
       return null;
     }
+  }
+
+  /**
+   * Intenta extraer funciones seguras para consultar el pool de conexiones
+   * Retorna undefined si no se pueden obtener las funciones esperadas
+   */
+  private getPoolFunctions():
+    | { numUsedConnections?: () => number; numConnections?: () => number }
+    | undefined {
+    type PoolLike = {
+      numUsedConnections?: () => number;
+      numConnections?: () => number;
+    };
+    const ds: unknown = this.dataSource;
+    if (!ds || typeof ds !== 'object') return undefined;
+
+    const driver = (ds as { driver?: unknown }).driver;
+    if (!driver || typeof driver !== 'object') return undefined;
+
+    const master = (driver as { master?: unknown }).master;
+    if (!master || typeof master !== 'object') return undefined;
+
+    const pool = (master as { pool?: unknown }).pool;
+    if (!pool || typeof pool !== 'object') return undefined;
+
+    const poolLike = pool as PoolLike;
+    const numUsed =
+      typeof poolLike.numUsedConnections === 'function'
+        ? () => Number(poolLike.numUsedConnections!())
+        : undefined;
+    const numTotal =
+      typeof poolLike.numConnections === 'function'
+        ? () => Number(poolLike.numConnections!())
+        : undefined;
+
+    return { numUsedConnections: numUsed, numConnections: numTotal };
   }
 }
