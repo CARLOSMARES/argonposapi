@@ -1,10 +1,10 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
+import * as bcrypt from 'bcrypt';
 import { User } from 'src/entities/user.entity';
 import { Repository } from 'typeorm';
-import * as bcrypt from 'bcrypt';
-import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class AuthService {
@@ -13,7 +13,7 @@ export class AuthService {
     private readonly configService: ConfigService,
     @InjectRepository(User)
     private readonly userRepo: Repository<User>,
-  ) {}
+  ) { }
 
   async validateUser(username: string, password: string): Promise<User> {
     const user = await this.userRepo.findOne({ where: { username } as any });
@@ -27,8 +27,11 @@ export class AuthService {
     const user = await this.validateUser(username, password);
     const payload = { sub: (user as any).id, username };
     const access_token = await this.jwtService.signAsync(payload);
-    const refreshExpires = this.configService.get<string>('JWT_REFRESH_EXPIRATION') ?? '7d';
-    const refresh_token = await this.jwtService.signAsync(payload, { expiresIn: refreshExpires });
+    const refreshExpires =
+      this.configService.get<string>('JWT_REFRESH_EXPIRATION') ?? '7d';
+    const refresh_token = await this.jwtService.signAsync(payload, {
+      expiresIn: refreshExpires,
+    });
     return { access_token, refresh_token };
   }
 
@@ -45,5 +48,3 @@ export class AuthService {
     }
   }
 }
-
-

@@ -1,17 +1,15 @@
-import { NestFactory } from '@nestjs/core';
-import { MicroserviceOptions, Transport } from '@nestjs/microservices';
-import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
-import { AppModule } from './app.module';
-import { ValidationPipe } from '@nestjs/common';
-import { Reflector } from '@nestjs/core';
-import { JwtAuthGuard } from './auth/jwt-auth.guard';
-import { Queue } from 'bullmq';
-import { getQueueToken } from '@nestjs/bullmq';
 import { createBullBoard } from '@bull-board/api';
 import { BullMQAdapter } from '@bull-board/api/bullMQAdapter';
 import { ExpressAdapter } from '@bull-board/express';
-import { join } from 'path';
+import { getQueueToken } from '@nestjs/bullmq';
+import { ValidationPipe } from '@nestjs/common';
+import { NestFactory, Reflector } from '@nestjs/core';
+import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import { Queue } from 'bullmq';
 import * as express from 'express';
+import { join } from 'path';
+import { AppModule } from './app.module';
+import { JwtAuthGuard } from './auth/jwt-auth.guard';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -35,19 +33,10 @@ async function bootstrap() {
   });
   const expressApp = app.getHttpAdapter().getInstance();
   expressApp.use('/queues', serverAdapter.getRouter());
-  
+
   // Servir archivos estáticos de fotos
   expressApp.use('/fotos', express.static(join(__dirname, '..', 'fotos')));
 
   await app.listen(process.env.PORT ?? 3000);
-  
-  // const app = await NestFactory.createMicroservice<MicroserviceOptions>(
-  //   AppModule,
-  //   {
-  //     transport: Transport.TCP,
-  //   },
-  // );
-  // await app.listen();
-
 }
 bootstrap();

@@ -4,41 +4,39 @@ import { IsEmail, IsString } from 'class-validator';
 export class CreateUserDto {
     @ApiProperty({
         description: 'Nombre del usuario',
-        example: 'Juan'
+        example: 'Juan',
     })
     @IsString()
     name: string;
-    
+
     @ApiProperty({
         description: 'Apellido del usuario',
-        example: 'Pérez'
+        example: 'Pérez',
     })
     @IsString()
     lastname: string;
-    
+
     @ApiProperty({
         description: 'Nombre de usuario único',
-        example: 'jperez'
+        example: 'jperez',
     })
     @IsString()
-    user: string;
-    
+    username: string;
+
     @ApiProperty({
         description: 'Contraseña del usuario',
         example: 'password123',
-        minLength: 6
+        minLength: 6,
     })
     @IsString()
     password: string;
-    
+
     @ApiProperty({
         description: 'Correo electrónico del usuario',
-        example: 'juan.perez@example.com'
+        example: 'juan.perez@example.com',
     })
     @IsEmail()
     email: string;
 }
 
-export class UpdateUserDto extends PartialType(CreateUserDto) {}
-
-
+export class UpdateUserDto extends PartialType(CreateUserDto) { }
