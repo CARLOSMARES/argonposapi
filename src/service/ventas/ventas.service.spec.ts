@@ -84,4 +84,10 @@ describe('VentasService', () => {
         (repo.delete as jest.Mock).mockResolvedValue({ affected: 0 });
         await expect(service.remove(123)).rejects.toThrow('Venta not found');
     });
+
+    it('remove elimina con éxito cuando affected > 0', async () => {
+        (repo.delete as jest.Mock).mockResolvedValue({ affected: 1 });
+        await expect(service.remove(123)).resolves.toBeUndefined();
+        expect(repo.delete as jest.Mock).toHaveBeenCalledWith(123);
+    });
 });

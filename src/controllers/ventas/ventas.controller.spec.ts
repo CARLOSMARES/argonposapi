@@ -59,4 +59,11 @@ describe('VentasController', () => {
         expect(serviceMock.update).toHaveBeenCalledWith(4, { idventa: 'V-4B' });
         expect(res).toEqual({ id: 4, idventa: 'V-4B' });
     });
+
+    it('DELETE /ventas/:id llama al servicio y retorna success', async () => {
+        (serviceMock.remove as jest.Mock).mockResolvedValue(undefined);
+        const res = await controller.remove(10 as any);
+        expect(serviceMock.remove).toHaveBeenCalledWith(10);
+        expect(res).toEqual({ success: true });
+    });
 });
