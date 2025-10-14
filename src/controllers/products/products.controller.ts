@@ -125,3 +125,17 @@ export class ProductsController {
     };
   }
 }
+
+// Helpers exportados para facilitar testing del interceptor
+export function buildProductPhotoFilename(
+  productId: string | number,
+  originalname: string,
+) {
+  const fileExtName = extname(originalname);
+  const fileName = `product_${productId}_${Date.now()}${fileExtName}`;
+  return fileName;
+}
+
+export function isAllowedImage(file: Express.Multer.File) {
+  return !!file.mimetype.match(/\/(jpg|jpeg|png|gif|webp)$/);
+}

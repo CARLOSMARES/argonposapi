@@ -31,9 +31,8 @@ describe('ProvidersController', () => {
 
   it('POST /providers crea', async () => {
     (serviceMock.create as jest.Mock).mockResolvedValue({ id: 1 });
-    const res = await controller.create({ name: 'Proveedor' } as Partial<
-      import('../../dto/providers.dto').CreateProvidersDto
-    >);
+    // usar any para evitar cheques estrictos de tipos en tests
+    const res = await controller.create({ name: 'Proveedor' } as any);
     expect(serviceMock.create).toHaveBeenCalled();
     expect(res).toEqual({ id: 1 });
   });

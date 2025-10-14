@@ -31,9 +31,7 @@ describe('StockController', () => {
 
   it('POST /stock crea', async () => {
     (serviceMock.create as jest.Mock).mockResolvedValue({ id: 1 });
-    const res = await controller.create({ name: 'Item' } as Partial<
-      import('../../dto/stock.dto').CreateStockDto
-    >);
+    const res = await controller.create({ name: 'Item' } as any);
     expect(serviceMock.create).toHaveBeenCalled();
     expect(res).toEqual({ id: 1 });
   });

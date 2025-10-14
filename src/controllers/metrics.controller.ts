@@ -280,7 +280,7 @@ export class MetricsController {
                 <div class="stat-label">Conexiones activas</div>
                 <div class="metric-item">
                     <div class="metric-name">Utilización del Pool</div>
-                    <div class="metric-description">${dbStats ? dbStats.connectionUtilization.toFixed(1) : 0}%</div>
+                    <div class="metric-description">${(dbStats && typeof dbStats.connectionUtilization === 'number' ? dbStats.connectionUtilization.toFixed(1) : 0)}%</div>
                 </div>
             </div>
             

@@ -1,7 +1,7 @@
 import { Test } from '@nestjs/testing';
 import { Response } from 'express';
-import { BullMQMetricsService } from '../../metrics/bullmq-metrics.service';
-import { TypeORMMetricsService } from '../../metrics/typeorm-metrics.service';
+import { BullMQMetricsService } from '../metrics/bullmq-metrics.service';
+import { TypeORMMetricsService } from '../metrics/typeorm-metrics.service';
 import { MetricsController } from './metrics.controller';
 
 describe('MetricsController', () => {

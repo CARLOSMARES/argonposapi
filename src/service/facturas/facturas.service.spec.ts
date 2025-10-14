@@ -58,4 +58,14 @@ describe('FacturasService', () => {
     const res = await service.findAll();
     expect(res).toEqual([{ id: 1 }]);
   });
+
+  it('findOne lanza NotFoundException si no existe', async () => {
+    (repo.findOne as jest.Mock).mockResolvedValue(null);
+    await expect(service.findOne(999)).rejects.toThrow('Factura not found');
+  });
+
+  it('remove lanza NotFoundException si no afecta filas', async () => {
+    (repo.delete as jest.Mock).mockResolvedValue({ affected: 0 });
+    await expect(service.remove(123)).rejects.toThrow('Factura not found');
+  });
 });

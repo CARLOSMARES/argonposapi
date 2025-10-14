@@ -4,14 +4,14 @@ import { Test } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import * as request from 'supertest';
 import { DataSource, Repository } from 'typeorm';
-import { company } from '../../../entities/company.entity';
-import { facturas } from '../../../entities/facturas.entity';
-import { products } from '../../../entities/products.entity';
-import { providers } from '../../../entities/providers.entity';
-import { stock } from '../../../entities/stock.entity';
-import { User } from '../../../entities/user.entity';
-import { InvoicesProcessor } from '../../../queues/workers/invoices.processor';
 import { AppModule } from '../src/app.module';
+import { company } from '../src/entities/company.entity';
+import { facturas } from '../src/entities/facturas.entity';
+import { products } from '../src/entities/products.entity';
+import { providers } from '../src/entities/providers.entity';
+import { stock } from '../src/entities/stock.entity';
+import { User } from '../src/entities/user.entity';
+import { InvoicesProcessor } from '../src/queues/workers/invoices.processor';
 
 describe('App E2E', () => {
   let app: INestApplication;

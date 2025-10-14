@@ -31,9 +31,7 @@ describe('UserController', () => {
 
   it('POST /user crea', async () => {
     (serviceMock.create as jest.Mock).mockResolvedValue({ id: 1 });
-    const res = await controller.create({ name: 'User' } as Partial<
-      import('../../dto/user.dto').CreateUserDto
-    >);
+    const res = await controller.create({ name: 'User' } as any);
     expect(serviceMock.create).toHaveBeenCalled();
     expect(res).toEqual({ id: 1 });
   });

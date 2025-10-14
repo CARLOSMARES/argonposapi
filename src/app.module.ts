@@ -24,6 +24,7 @@ import { promotions } from './entities/promotions.entity';
 import { providers } from './entities/providers.entity';
 import { stock } from './entities/stock.entity';
 import { User } from './entities/user.entity';
+import { ventas } from './entities/ventas.entity';
 import { CustomThrottlerGuard } from './guards/custom-throttler.guard';
 import { LoggingInterceptor } from './interceptors/logging.interceptor';
 import { PrometheusInterceptor } from './interceptors/prometheus.interceptor';
@@ -39,6 +40,7 @@ import { PromotionsService } from './service/promotions/promotions.service';
 import { ProvidersService } from './service/providers/providers.service';
 import { StockService } from './service/stock/stock.service';
 import { UserService } from './service/user/user.service';
+import { VentasModule } from './service/ventas/ventas.module';
 
 @Module({
   imports: [
@@ -75,6 +77,7 @@ import { UserService } from './service/user/user.service';
       User,
       company,
       facturas,
+      ventas,
       products,
       stock,
       providers,
@@ -84,6 +87,9 @@ import { UserService } from './service/user/user.service';
     ]),
     AuthModule,
     QueuesModule,
+    // Ventas module
+    // Módulo que maneja operaciones de ventas
+    VentasModule,
     LoginsModule,
   ],
   controllers: [
@@ -124,4 +130,4 @@ import { UserService } from './service/user/user.service';
     },
   ],
 })
-export class AppModule {}
+export class AppModule { }
