@@ -8,11 +8,13 @@ import { CategoriesController } from './controllers/categories/categories.contro
 import { CompanyController } from './controllers/company/company.controller';
 import { FacturasController } from './controllers/facturas/facturas.controller';
 import { HealthController } from './controllers/health.controller';
+import { MenuController } from './controllers/menu/menu.controller';
 import { MetricsController } from './controllers/metrics.controller';
 import { ProductTypesController } from './controllers/product_types/product_types.controller';
 import { ProductsController } from './controllers/products/products.controller';
 import { PromotionsController } from './controllers/promotions/promotions.controller';
 import { ProvidersController } from './controllers/providers/providers.controller';
+import { SettingsController } from './controllers/settings/settings.controller';
 import { StockController } from './controllers/stock/stock.controller';
 import { UserController } from './controllers/user/user.controller';
 import { categories } from './entities/categories.entity';
@@ -22,6 +24,7 @@ import { product_types } from './entities/product_types.entity';
 import { products } from './entities/products.entity';
 import { promotions } from './entities/promotions.entity';
 import { providers } from './entities/providers.entity';
+import { settings } from './entities/settings.entity';
 import { stock } from './entities/stock.entity';
 import { User } from './entities/user.entity';
 import { ventas } from './entities/ventas.entity';
@@ -34,10 +37,12 @@ import { QueuesModule } from './queues/queues.module';
 import { CategoriesService } from './service/categories/categories.service';
 import { CompanyService } from './service/company/company.service';
 import { FacturasService } from './service/facturas/facturas.service';
+import { MenuService } from './service/menu/menu.service';
 import { ProductTypesService } from './service/product_types/product_types.service';
 import { ProductsService } from './service/products/products.service';
 import { PromotionsService } from './service/promotions/promotions.service';
 import { ProvidersService } from './service/providers/providers.service';
+import { SettingsService } from './service/settings/settings.service';
 import { StockService } from './service/stock/stock.service';
 import { UserService } from './service/user/user.service';
 import { VentasModule } from './service/ventas/ventas.module';
@@ -84,6 +89,7 @@ import { VentasModule } from './service/ventas/ventas.module';
       categories,
       product_types,
       promotions,
+      settings,
     ]),
     AuthModule,
     QueuesModule,
@@ -102,6 +108,8 @@ import { VentasModule } from './service/ventas/ventas.module';
     CategoriesController,
     ProductTypesController,
     PromotionsController,
+    SettingsController,
+    MenuController,
     HealthController,
     MetricsController,
   ],
@@ -115,6 +123,8 @@ import { VentasModule } from './service/ventas/ventas.module';
     CategoriesService,
     ProductTypesService,
     PromotionsService,
+    SettingsService,
+    MenuService,
     TypeORMMetricsService,
     {
       provide: APP_INTERCEPTOR,
